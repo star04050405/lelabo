@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LE LABO · 实验室手账 | Apothecary Journal</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Courier Prime, Space Mono, Noto Serif SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- html2canvas for high-res PNG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['"Courier Prime"', '"Space Mono"', '"Noto Serif SC"', 'monospace'],
+            space: ['"Space Mono"', '"Courier Prime"', 'monospace'],
+            serif: ['"Noto Serif SC"', '"Songti SC"', 'serif'],
+          },
+          colors: {
+            stoneBg: '#E8E5DF',
+            ink: '#1A1A1A',
+            mutedInk: '#635F59',
+            hairline: '#D1CCC3',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Base Workspace Styling */
+    body {
+      background-color: #E8E5DF;
+      color: #1A1A1A;
+      font-family: 'Courier Prime', 'Noto Serif SC', monospace;
+      -webkit-font-smoothing: antialiased;
+      background-image: radial-gradient(rgba(26, 26, 26, 0.045) 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+
+    /* Subtle custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(26, 26, 26, 0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(26, 26, 26, 0.35);
+    }
+
+    /* Paper Theme Variables applied to #journal-card */
+    .theme-classic {
+      --paper-bg: #F6F3EC;
+      --paper-ink: #1A1A1A;
+      --paper-muted: #5C5852;
+      --paper-rule: rgba(26, 26, 26, 0.22);
+      --paper-rule-strong: #1A1A1A;
+      --paper-stamp: rgba(140, 38, 30, 0.72);
+      --paper-grid: none;
+    }
+
+    .theme-kraft {
+      --paper-bg: #DFD3C0;
+      --paper-ink: #221F1C;
+      --paper-muted: #5B5146;
+      --paper-rule: rgba(34, 31, 28, 0.26);
+      --paper-rule-strong: #221F1C;
+      --paper-stamp: rgba(118, 36, 28, 0.75);
+      --paper-grid: none;
+    }
+
+    .theme-noir {
+      --paper-bg: #1C1C1B;
+      --paper-ink: #EAE6DF;
+      --paper-muted: #9E9990;
+      --paper-rule: rgba(234, 230, 223, 0.22);
+      --paper-rule-strong: #EAE6DF;
+      --paper-stamp: rgba(212, 198, 175, 0.72);
+      --paper-grid: none;
+    }
+
+    .theme-grid {
+      --paper-bg: #F7F6F2;
+      --paper-ink: #1A1A1A;
+      --paper-muted: #5E5B55;
+      --paper-rule: rgba(26, 26, 26, 0.22);
+      --paper-rule-strong: #1A1A1A;
+      --paper-stamp: rgba(32, 60, 92, 0.72);
+      --paper-grid: linear-gradient(to right, rgba(26, 26, 26, 0.055) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(26, 26, 26, 0.055) 1px, transparent 1px);
+    }
+
+    /* Apothecary Card Styling */
+    #journal-card {
+      background-color: var(--paper-bg);
+      color: var(--paper-ink);
+      background-image: var(--paper-grid);
+      background-size: 16px 16px;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle archival paper edge shadow in preview */
+    .card-stage-shadow {
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 12px 32px rgba(26, 24, 20, 0.12),
+        0 24px 48px rgba(26, 24, 20, 0.06);
+    }
+
+    .card-rule {
+      border-color: var(--paper-rule);
+    }
+
+    .card-rule-strong {
+      border-color: var(--paper-rule-strong);
+    }
+
+    .card-muted {
+      color: var(--paper-muted);
+    }
+
+    /* Aspect ratio modes */
+    .card-ratio-classic {
+      min-height: 613px; /* 460 * 4 / 3 = 613.33px */
+    }
+    .card-ratio-auto {
+      min-height: 460px;
+    }
+
+    /* Rubber Stamp Styling */
+    .apothecary-stamp {
+      color: var(--paper-stamp);
+      border: 1.5px solid var(--paper-stamp);
+      box-shadow: inset 0 0 0 1px var(--paper-bg), inset 0 0 0 2.5px var(--paper-stamp);
+      transform: rotate(-7deg);
+      letter-spacing: 0.14em;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Form Controls */
+    .lab-input {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.55);
+      border: 1px solid #C8C2B8;
+      border-radius: 3px;
+      padding: 0.5rem 0.7rem;
+      font-size: 0.875rem;
+      color: #1A1A1A;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .lab-input:focus {
+      outline: none;
+      border-color: #1A1A1A;
+      background-color: #FFFFFF;
+    }
+    .lab-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #5C5852;
+      margin-bottom: 0.35rem;
+    }
+
+    /* Subtle Toast Animation */
+    .toast-enter {
+      opacity: 1 !important;
+      transform: translate(-50%, 0) !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-ink selection:text-stoneBg">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-[#E8E5DF]/90 backdrop-blur-md border-b border-[#C8C2B8]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Brand Mark -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 border border-ink flex items-center justify-center font-space font-bold text-xs tracking-tighter shrink-0 rounded-sm bg-[#F6F3EC]">
+          LL
+        </div>
+        <div class="truncate">
+          <div class="flex items-baseline gap-2">
+            <h1 class="font-space font-bold tracking-[0.18em] text-sm sm:text-base uppercase text-ink">LE JOURNAL</h1>
+            <span class="hidden sm:inline text-xs text-mutedInk font-serif">实验室手账</span>
+          </div>
+          <p class="text-[10px] tracking-[0.14em] uppercase text-mutedInk truncate">Apothecary Note Compounding System</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <button id="btn-open-archive" type="button" class="px-3 py-2 text-xs font-mono border border-[#B5AFA4] bg-[#F2EFE9] hover:border-ink hover:bg-white text-ink rounded-sm transition flex items-center gap-1.5">
+          <span>档案柜</span>
+          <span id="archive-count" class="px-1.5 py-0.5 text-[10px] bg-ink text-[#F6F3EC] rounded-sm font-space">0</span>
+        </button>
+        <button id="btn-save-archive" type="button" class="px-3 py-2 text-xs font-mono border border-ink bg-transparent hover:bg-ink hover:text-[#F6F3EC] text-ink rounded-sm transition">
+          存入档案
+        </button>
+        <button id="btn-export-png" type="button" class="px-3.5 sm:px-4 py-2 text-xs font-mono bg-ink text-[#F6F3EC] hover:bg-[#333330] rounded-sm transition flex items-center gap-1.5 shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+          </svg>
+          <span>导出图片</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Split-Screen Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 lg:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT PANEL: Writing Desk & Controls -->
+      <section class="lg:col-span-5 xl:col-span-5 bg-[#F2EFE9]/85 border border-[#CFCAC0] rounded-sm p-5 sm:p-6 space-y-6">
+        <div class="flex items-center justify-between border-b border-[#D5D0C6] pb-3">
+          <div>
+            <h2 class="font-space text-xs font-bold tracking-[0.18em] uppercase text-ink">01 / Formula Desk</h2>
+            <p class="text-xs text-mutedInk font-serif mt-0.5">调配你的今日手账配方</p>
+          </div>
+          <button id="btn-new-entry" type="button" class="text-[11px] font-mono text-mutedInk hover:text-ink underline underline-offset-4 transition">
+            新建空白
+          </button>
+        </div>
+
+        <!-- Title & Formula No -->
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-8">
+            <label for="input-title" class="lab-label">配方标题 · Title</label>
+            <input id="input-title" type="text" class="lab-input font-mono" placeholder="例如：SANTAL / 冬日切片" maxlength="40" />
+          </div>
+          <div class="col-span-4">
+            <label for="input-number" class="lab-label">编号 · No.</label>
+            <input id="input-number" type="text" class="lab-input font-space text-center font-bold" placeholder="26" maxlength="6" />
+          </div>
+        </div>
+
+        <!-- Subtitle / Type -->
+        <div>
+          <label for="input-subtitle" class="lab-label">副标题分类 · Classification</label>
+          <input id="input-subtitle" type="text" class="lab-input font-mono text-xs" placeholder="eau de mémoire" maxlength="48" />
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button type="button" class="preset-sub px-2 py-1 text-[11px] font-mono border border-[#C8C2B8] bg-[#FAF8F4] hover:border-ink rounded-sm transition" data-val="eau de mémoire">eau de mémoire</button>
+            <button type="button" class="preset-sub px-2 py-1 text-[11px] font-mono border border-[#C8C2B8] bg-[#FAF8F4] hover:border-ink rounded-sm transition" data-val="daily log">daily log</button>
+            <button type="button" class="preset-sub px-2 py-1 text-[11px] font-mono border border-[#C8C2B8] bg-[#FAF8F4] hover:border-ink rounded-sm transition" data-val="film notes">film notes</button>
+            <button type="button" class="preset-sub px-2 py-1 text-[11px] font-mono border border-[#C8C2B8] bg-[#FAF8F4] hover:border-ink rounded-sm transition" data-val="reading notes">reading notes</button>
+            <button type="button" class="preset-sub px-2 py-1 text-[11px] font-mono border border-[#C8C2B8] bg-[#FAF8F4] hover:border-ink rounded-sm transition" data-val="private blend">private blend</button>
+          </div>
+        </div>
+
+        <!-- Journal Content -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="input-content" class="lab-label mb-0">正文记录 · Journal Entry</label>
+            <span id="char-count" class="text-[11px] font-space text-mutedInk">0 chars</span>
+          </div>
+          <textarea id="input-content" rows="5" class="lab-input font-serif leading-relaxed resize-y min-h-[120px]" placeholder="记录此刻的思绪、摘抄、气味或一段安静的日常..."></textarea>
+        </div>
+
+        <!-- Photo Attachment -->
+        <div class="border-t border-[#D5D0C6] pt-5">
+          <div class="flex items-center justify-between mb-2">
+            <label class="lab-label mb-0">影像附片 · Photo Attachment (可选)</label>
+            <button id="btn-remove-photo" type="button" class="hidden text-[11px] font-mono text-red-800 hover:underline">移除图片</button>
+          </div>
+
+          <label for="input-photo" class="flex items-center justify-center gap-2 w-full py-3 px-4 border border-dashed border-[#A8A298] hover:border-ink bg-[#FAF8F4]/70 hover:bg-white rounded-sm cursor-pointer transition text-xs text-mutedInk hover:text-ink">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <span id="photo-upload-label">点击上传本地照片 (JPG / PNG / WebP)</span>
+            <input id="input-photo" type="file" accept="image/*" class="hidden" />
+          </label>
+
+          <!-- Photo Filter Controls -->
+          <div id="photo-style-controls" class="hidden mt-3 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" class="photo-filter-btn py-1.5 text-xs font-mono border rounded-sm transition" data-filter="original">原图 Original</button>
+              <button type="button" class="photo-filter-btn py-1.5 text-xs font-mono border rounded-sm transition" data-filter="bw">黑白胶片 B&amp;W</button>
+              <button type="button" class="photo-filter-btn py-1.5 text-xs font-mono border rounded-sm transition" data-filter="vintage">复古低饱和</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apothecary Metadata -->
+        <div class="border-t border-[#D5D0C6] pt-5 space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="font-space text-xs font-bold tracking-[0.16em] uppercase text-ink">02 / Metadata</h3>
+            <button id="btn-fill-now" type="button" class="text-[11px] font-mono text-mutedInk hover:text-ink underline underline-offset-4">填入当前时间</button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="input-compounded" class="lab-label">Compounded · 调配时间</label>
+              <input id="input-compounded" type="text" class="lab-input font-mono text-xs" placeholder="2026.11.26 / 21:30" />
+            </div>
+            <div>
+              <label for="input-in" class="lab-label">In · 地点</label>
+              <input id="input-in" type="text" class="lab-input font-mono text-xs" placeholder="our lab" />
+            </div>
+          </div>
+
+          <div>
+            <label for="input-for" class="lab-label">For · 致 / 记录者</label>
+            <input id="input-for" type="text" class="lab-input font-mono text-xs" placeholder="myself" />
+          </div>
+
+          <!-- Scent / Mood Notes -->
+          <div class="pt-1">
+            <div class="flex items-center justify-between mb-2">
+              <label class="lab-label mb-0">Notes · 香调 / 情绪关键词</label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs text-mutedInk">
+                <input id="toggle-notes" type="checkbox" checked class="accent-ink w-3.5 h-3.5" />
+                <span>显示</span>
+              </label>
+            </div>
+            <div id="notes-inputs-wrap" class="grid grid-cols-3 gap-2">
+              <input id="input-note-1" type="text" class="lab-input text-xs font-serif text-center" placeholder="前调 / 天气" maxlength="16" />
+              <input id="input-note-2" type="text" class="lab-input text-xs font-serif text-center" placeholder="中调 / 心境" maxlength="16" />
+              <input id="input-note-3" type="text" class="lab-input text-xs font-serif text-center" placeholder="尾调 / 关键词" maxlength="16" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Style Controls -->
+        <div class="border-t border-[#D5D0C6] pt-5 space-y-4">
+          <h3 class="font-space text-xs font-bold tracking-[0.16em] uppercase text-ink">03 / Paper &amp; Stamp</h3>
+
+          <!-- Paper Theme Selector -->
+          <div>
+            <label class="lab-label">纸张材质 · Paper Preset</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button type="button" class="theme-btn p-2 border rounded-sm text-left transition flex items-center gap-2" data-theme="classic">
+                <span class="w-4 h-4 rounded-full border border-black/20 shrink-0" style="background:#F6F3EC;"></span>
+                <span class="text-xs font-serif truncate">经典米白</span>
+              </button>
+              <button type="button" class="theme-btn p-2 border rounded-sm text-left transition flex items-center gap-2" data-theme="kraft">
+                <span class="w-4 h-4 rounded-full border border-black/20 shrink-0" style="background:#DFD3C0;"></span>
+                <span class="text-xs font-serif truncate">牛皮原浆</span>
+              </button>
+              <button type="button" class="theme-btn p-2 border rounded-sm text-left transition flex items-center gap-2" data-theme="noir">
+                <span class="w-4 h-4 rounded-full border border-black/20 shrink-0" style="background:#1C1C1B;"></span>
+                <span class="text-xs font-serif truncate">暗夜实验</span>
+              </button>
+              <button type="button" class="theme-btn p-2 border rounded-sm text-left transition flex items-center gap-2" data-theme="grid">
+                <span class="w-4 h-4 rounded-full border border-black/20 shrink-0" style="background-color:#F7F6F2; background-image:linear-gradient(to right, rgba(0,0,0,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.18) 1px, transparent 1px); background-size:5px 5px;"></span>
+                <span class="text-xs font-serif truncate">档案格纸</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Aspect Ratio & Stamp -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="lab-label">版式比例 · Layout</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" class="layout-btn py-1.5 text-xs font-mono border rounded-sm transition" data-layout="classic">经典标签 3:4</button>
+                <button type="button" class="layout-btn py-1.5 text-xs font-mono border rounded-sm transition" data-layout="auto">长文手账 Auto</button>
+              </div>
+            </div>
+            <div>
+              <label for="select-stamp" class="lab-label">实验室印章 · Ink Stamp</label>
+              <select id="select-stamp" class="lab-input text-xs font-mono py-1.5">
+                <option value="NONE">无印章 (NONE)</option>
+                <option value="FRESHLY COMPOUNDED">FRESHLY COMPOUNDED</option>
+                <option value="PRIVATE ARCHIVE">PRIVATE ARCHIVE</option>
+                <option value="VERIFIED">VERIFIED</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Footer & Barcode Toggle -->
+          <div class="flex items-center justify-between pt-1">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-ink">
+              <input id="toggle-footer" type="checkbox" checked class="accent-ink w-3.5 h-3.5" />
+              <span>显示底部条形码与实验室声明</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: Live Apothecary Preview -->
+      <section class="lg:col-span-7 xl:col-span-7 flex flex-col items-center lg:sticky lg:top-24">
+        <div class="w-full max-w-[460px] flex items-center justify-between mb-3 px-1">
+          <span class="font-space text-[11px] tracking-[0.16em] uppercase text-mutedInk">Live Label Preview · 实时预览</span>
+          <span id="preview-meta-badge" class="font-space text-[10px] tracking-[0.12em] uppercase text-mutedInk">3:4 · CLASSIC</span>
+        </div>
+
+        <!-- Capture Target Wrapper -->
+        <div class="w-full max-w-[460px] card-stage-shadow rounded-[2px]">
+          <article id="journal-card" class="theme-classic card-ratio-classic w-full p-7 sm:p-9 flex flex-col justify-between">
+
+            <!-- Top Content Group -->
+            <div>
+              <!-- Micro Header -->
+              <div class="flex items-center justify-between text-[10px] font-space tracking-[0.2em] uppercase card-muted pb-3 border-b card-rule">
+                <span>LE LABO · JOURNAL</span>
+                <span>ARCHIVE EDITION</span>
+              </div>
+
+              <!-- Iconic Formula Title & Number -->
+              <div class="pt-5 pb-3.5 flex items-baseline justify-between gap-4 border-b card-rule-strong">
+                <h2 id="card-title" class="font-mono font-bold text-2xl sm:text-[26px] tracking-[0.08em] uppercase leading-tight break-words">
+                  SANTAL / 冬日切片
+                </h2>
+                <span id="card-number" class="font-space font-bold text-3xl sm:text-4xl tracking-tight shrink-0 leading-none">
+                  26
+                </span>
+              </div>
+
+              <!-- Subtitle Row -->
+              <div class="py-2 flex items-center justify-between text-xs font-mono tracking-[0.12em] card-muted border-b card-rule">
+                <span id="card-subtitle">eau de mémoire</span>
+                <span class="text-[10px] font-space uppercase opacity-80">100% HAND-TYPED</span>
+              </div>
+
+              <!-- Optional Photo Frame -->
+              <div id="card-photo-wrap" class="hidden mt-5 mb-2">
+                <div class="p-1.5 border card-rule bg-black/[0.02]">
+                  <img id="card-photo" src="" alt="Journal attachment" class="w-full h-auto block" />
+                </div>
+              </div>
+
+              <!-- Main Journal Body -->
+              <div class="py-6">
+                <p id="card-content" class="font-serif text-[14.5px] leading-[1.95] tracking-[0.03em] whitespace-pre-wrap break-words"></p>
+              </div>
+            </div>
+
+            <!-- Bottom Metadata & Footer Group -->
+            <div class="mt-auto pt-2 relative">
+
+              <!-- Optional Notes Grid -->
+              <div id="card-notes-wrap" class="mb-4 py-2.5 border-t border-b card-rule grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div class="text-[9px] font-space tracking-[0.16em] uppercase card-muted mb-0.5">TOP / 前调</div>
+                  <div id="card-note-1" class="text-xs font-serif truncate">冷冽松木</div>
+                </div>
+                <div class="border-l border-r card-rule px-1">
+                  <div class="text-[9px] font-space tracking-[0.16em] uppercase card-muted mb-0.5">HEART / 中调</div>
+                  <div id="card-note-2" class="text-xs font-serif truncate">旧书纸页</div>
+                </div>
+                <div>
+                  <div class="text-[9px] font-space tracking-[0.16em] uppercase card-muted mb-0.5">BASE / 尾调</div>
+                  <div id="card-note-3" class="text-xs font-serif truncate">微苦黑巧</div>
+                </div>
+              </div>
+
+              <!-- Classic Apothecary Metadata Lines -->
+              <div class="space-y-1.5 text-xs font-mono pb-4">
+                <div class="flex items-baseline gap-2">
+                  <span class="w-24 shrink-0 card-muted">Compounded:</span>
+                  <span id="card-compounded" class="tracking-wide break-all">2026.11.26</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="w-24 shrink-0 card-muted">In:</span>
+                  <span id="card-in" class="tracking-wide break-words">our lab</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="w-24 shrink-0 card-muted">For:</span>
+                  <span id="card-for" class="tracking-wide font-bold break-words">myself</span>
+                </div>
+              </div>
+
+              <!-- Optional Rubber Stamp -->
+              <div id="card-stamp" class="hidden apothecary-stamp absolute right-1 bottom-16 px-2.5 py-1 text-[9px] font-space font-bold uppercase text-center leading-tight">
+                FRESHLY COMPOUNDED
+              </div>
+
+              <!-- Toggleable Footer & Barcode -->
+              <div id="card-footer-wrap" class="pt-3.5 border-t card-rule flex items-end justify-between gap-4">
+                <div class="text-[8.5px] font-space leading-[1.55] tracking-[0.09em] uppercase card-muted">
+                  <div>FRESHLY COMPOUNDED · HAND-TYPED</div>
+                  <div>KEEP AWAY FROM NOISE &amp; HASTE</div>
+                </div>
+                <!-- Dynamic SVG Barcode -->
+                <div class="shrink-0 flex flex-col items-end">
+                  <svg id="card-barcode" width="96" height="26" viewBox="0 0 96 26" class="block" aria-hidden="true"></svg>
+                </div>
+              </div>
+            </div>
+
+          </article>
+        </div>
+
+        <!-- Quick Hint Below Card -->
+        <p class="mt-4 text-[11px] font-mono text-mutedInk text-center">
+          提示：点击右上角「导出图片」可生成 3x 超清 PNG 手账卡片
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Slide-over Archive Drawer ("档案柜") -->
+  <div id="archive-backdrop" class="fixed inset-0 z-40 bg-black/35 backdrop-blur-[2px] hidden opacity-0 transition-opacity duration-200"></div>
+  <aside id="archive-drawer" class="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-[#F2EFE9] border-l border-[#C8C2B8] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="px-6 py-5 border-b border-[#D1CCC3] flex items-center justify-between">
+      <div>
+        <h2 class="font-space font-bold text-sm tracking-[0.18em] uppercase text-ink">ARCHIVE · 实验室档案柜</h2>
+        <p class="text-xs text-mutedInk font-serif mt-0.5">保存在本地浏览器的手账记录</p>
+      </div>
+      <button id="btn-close-archive" type="button" class="p-2 text-mutedInk hover:text-ink transition" aria-label="关闭档案柜">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id="archive-list" class="flex-1 overflow-y-auto p-5 space-y-3">
+      <!-- Populated dynamically -->
+    </div>
+  </aside>
+
+  <!-- Export Preview Modal -->
+  <div id="export-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/55 backdrop-blur-sm">
+    <div class="bg-[#F2EFE9] border border-[#C8C2B8] rounded-sm max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-[#D1CCC3] flex items-center justify-between">
+        <div>
+          <h3 class="font-space text-xs font-bold tracking-[0.16em] uppercase text-ink">EXPORT READY · 图像已生成</h3>
+          <p class="text-[11px] text-mutedInk font-serif mt-0.5">已自动触发下载，你也可以右键或长按下方图片保存</p>
+        </div>
+        <button id="btn-close-export" type="button" class="p-1.5 text-mutedInk hover:text-ink transition" aria-label="关闭弹窗">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-5 overflow-y-auto flex justify-center bg-[#E8E5DF]">
+        <img id="exported-preview-img" src="" alt="Exported Le Labo Journal" class="max-w-full h-auto shadow-lg border border-black/10" />
+      </div>
+      <div class="px-5 py-3.5 border-t border-[#D1CCC3] flex items-center justify-end gap-2.5 bg-[#F2EFE9]">
+        <button id="btn-modal-close-secondary" type="button" class="px-3.5 py-2 text-xs font-mono border border-[#B5AFA4] text-ink hover:border-ink rounded-sm transition">
+          关闭
+        </button>
+        <a id="btn-modal-download" href="#" download="le-labo-journal.png" class="px-4 py-2 text-xs font-mono bg-ink text-[#F6F3EC] hover:bg-[#333330] rounded-sm transition">
+          再次下载 PNG
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimalist Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none z-50 bg-ink text-[#F6F3EC] px-4 py-2.5 rounded-sm text-xs font-mono tracking-wider shadow-lg transition-all duration-300">
+    已保存
+  </div>
+
+  <script>
+    /**
+     * Le Labo Apothecary Journal Application
+     * Handles real-time state sync, offscreen canvas photo filtering (for 100% html2canvas fidelity),
+     * deterministic SVG barcode generation, localStorage archive, and high-res PNG export.
+     */
+    (function () {
+      const STORAGE_KEY = 'le_labo_journal_archive_v1';
+
+      // Format current date/time in clean apothecary style
+      function getFormattedNow() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        return `${y}.${m}.${d} / ${hh}:${mm}`;
+      }
+
+      // Default poetic sample entry
+      const DEFAULT_STATE = {
+        id: null,
+        title: 'SANTAL / 冬日切片',
+        number: '26',
+        subtitle: 'eau de mémoire',
+        content: '午后四点的光线斜落在旧木桌上，窗外是清冽的初冬空气。\n\n煮了一杯深烘手冲，翻完书页里夹着去年秋天的干叶。日子不必总是喧哗，在安静的缝隙里，气味与字句会自动沉淀出时间应有的质感。',
+        compounded: getFormattedNow(),
+        inLocation: 'our lab',
+        forPerson: 'myself',
+        showNotes: true,
+        notes: ['冷冽松木', '旧书纸页', '微苦黑巧'],
+        theme: 'classic',
+        layout: 'classic',
+        stamp: 'FRESHLY COMPOUNDED',
+        showFooter: true,
+        rawPhotoDataUrl: '',
+        photoFilter: 'original',
+        processedPhotoDataUrl: ''
+      };
+
+      let state = { ...DEFAULT_STATE, notes: [...DEFAULT_STATE.notes] };
+      let archiveEntries = [];
+      let pendingDeleteId = null;
+
+      // DOM References
+      const els = {
+        // Inputs
+        title: document.getElementById('input-title'),
+        number: document.getElementById('input-number'),
+        subtitle: document.getElementById('input-subtitle'),
+        content: document.getElementById('input-content'),
+        charCount: document.getElementById('char-count'),
+        compounded: document.getElementById('input-compounded'),
+        inLocation: document.getElementById('input-in'),
+        forPerson: document.getElementById('input-for'),
+        toggleNotes: document.getElementById('toggle-notes'),
+        notesWrap: document.getElementById('notes-inputs-wrap'),
+        note1: document.getElementById('input-note-1'),
+        note2: document.getElementById('input-note-2'),
+        note3: document.getElementById('input-note-3'),
+        photoInput: document.getElementById('input-photo'),
+        photoLabel: document.getElementById('photo-upload-label'),
+        photoStyleControls: document.getElementById('photo-style-controls'),
+        btnRemovePhoto: document.getElementById('btn-remove-photo'),
+        selectStamp: document.getElementById('select-stamp'),
+        toggleFooter: document.getElementById('toggle-footer'),
+
+        // Card Preview Elements
+        card: document.getElementById('journal-card'),
+        previewMetaBadge: document.getElementById('preview-meta-badge'),
+        cardTitle: document.getElementById('card-title'),
+        cardNumber: document.getElementById('card-number'),
+        cardSubtitle: document.getElementById('card-subtitle'),
+        cardPhotoWrap: document.getElementById('card-photo-wrap'),
+        cardPhoto: document.getElementById('card-photo'),
+        cardContent: document.getElementById('card-content'),
+        cardNotesWrap: document.getElementById('card-notes-wrap'),
+        cardNote1: document.getElementById('card-note-1'),
+        cardNote2: document.getElementById('card-note-2'),
+        cardNote3: document.getElementById('card-note-3'),
+        cardCompounded: document.getElementById('card-compounded'),
+        cardIn: document.getElementById('card-in'),
+        cardFor: document.getElementById('card-for'),
+        cardStamp: document.getElementById('card-stamp'),
+        cardFooterWrap: document.getElementById('card-footer-wrap'),
+        cardBarcode: document.getElementById('card-barcode'),
+
+        // Actions & Modals
+        btnFillNow: document.getElementById('btn-fill-now'),
+        btnNewEntry: document.getElementById('btn-new-entry'),
+        btnSaveArchive: document.getElementById('btn-save-archive'),
+        btnOpenArchive: document.getElementById('btn-open-archive'),
+        btnCloseArchive: document.getElementById('btn-close-archive'),
+        archiveCount: document.getElementById('archive-count'),
+        archiveBackdrop: document.getElementById('archive-backdrop'),
+        archiveDrawer: document.getElementById('archive-drawer'),
+        archiveList: document.getElementById('archive-list'),
+        btnExportPng: document.getElementById('btn-export-png'),
+        exportModal: document.getElementById('export-modal'),
+        exportedPreviewImg: document.getElementById('exported-preview-img'),
+        btnCloseExport: document.getElementById('btn-close-export'),
+        btnModalCloseSecondary: document.getElementById('btn-modal-close-secondary'),
+        btnModalDownload: document.getElementById('btn-modal-download'),
+        toast: document.getElementById('toast')
+      };
+
+      // Toast helper
+      let toastTimer = null;
+      function showToast(message) {
+        els.toast.textContent = message;
+        els.toast.classList.add('toast-enter');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          els.toast.classList.remove('toast-enter');
+        }, 2400);
+      }
+
+      // Deterministic SVG Barcode Generator based on seed string
+      function renderBarcode(seedText) {
+        const svg = els.cardBarcode;
+        const seedStr = (seedText || 'LELABO26').toUpperCase();
+        let hash = 2166136261;
+        for (let i = 0; i < seedStr.length; i++) {
+          hash ^= seedStr.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+
+        const bars = [];
+        let x = 2;
+        const maxW = 94;
+        // Start guard bars
+        bars.push({ x: x, w: 1.5 }); x += 3;
+        bars.push({ x: x, w: 1 }); x += 2.5;
+
+        let step = 0;
+        while (x < maxW - 7) {
+          hash = Math.imul(hash ^ (step + 13), 16777619);
+          const barW = [1, 1.5, 2.2, 3][Math.abs(hash) % 4];
+          const gapW = [1, 1.5, 2.2][Math.abs(hash >> 3) % 3];
+          if (x + barW < maxW - 6) {
+            bars.push({ x, w: barW });
+          }
+          x += barW + gapW;
+          step++;
+        }
+
+        // End guard bars
+        bars.push({ x: maxW - 5, w: 1 });
+        bars.push({ x: maxW - 2.5, w: 1.5 });
+
+        svg.innerHTML = bars
+          .map(b => `<rect x="${b.x.toFixed(1)}" y="0" width="${b.w.toFixed(1)}" height="26" fill="currentColor" />`)
+          .join('');
+      }
+
+      // Process uploaded image on an offscreen canvas so filters are baked into the DataURL
+      // This guarantees 100% consistent rendering in html2canvas PNG exports across all browsers.
+      function processPhotoFilter(rawDataUrl, filterType) {
+        return new Promise((resolve) => {
+          if (!rawDataUrl) {
+            resolve('');
+            return;
+          }
+          const img = new Image();
+          img.onload = () => {
+            const maxWidth = 1000;
+            let w = img.naturalWidth;
+            let h = img.naturalHeight;
+            if (w > maxWidth) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            if (filterType !== 'original') {
+              const imgData = ctx.getImageData(0, 0, w, h);
+              const d = imgData.data;
+
+              if (filterType === 'bw') {
+                // High-aesthetic B&W film contrast curve
+                for (let i = 0; i < d.length; i += 4) {
+                  let lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                  // Subtle contrast boost & slight lift in blacks for matte film feel
+                  lum = (lum - 128) * 1.15 + 132;
+                  lum = Math.max(14, Math.min(245, lum));
+                  d[i] = d[i + 1] = d[i + 2] = lum;
+                }
+              } else if (filterType === 'vintage') {
+                // Muted low-saturation warm archival look
+                for (let i = 0; i < d.length; i += 4) {
+                  const r = d[i], g = d[i + 1], b = d[i + 2];
+                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                  // Desaturate by 48% and warm highlights slightly
+                  let nr = lum * 0.48 + r * 0.52 + 8;
+                  let ng = lum * 0.48 + g * 0.52 + 3;
+                  let nb = lum * 0.48 + b * 0.52 - 7;
+                  // Gentle matte fade
+                  nr = (nr - 128) * 0.92 + 132;
+                  ng = (ng - 128) * 0.92 + 131;
+                  nb = (nb - 128) * 0.92 + 128;
+                  d[i] = Math.max(18, Math.min(242, nr));
+                  d[i + 1] = Math.max(18, Math.min(240, ng));
+                  d[i + 2] = Math.max(18, Math.min(235, nb));
+                }
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+
+            resolve(canvas.toDataURL('image/jpeg', 0.9));
+          };
+          img.onerror = () => resolve(rawDataUrl);
+          img.src = rawDataUrl;
+        });
+      }
+
+      // Sync UI inputs from state
+      function syncInputsFromState() {
+        els.title.value = state.title;
+        els.number.value = state.number;
+        els.subtitle.value = state.subtitle;
+        els.content.value = state.content;
+        els.compounded.value = state.compounded;
+        els.inLocation.value = state.inLocation;
+        els.forPerson.value = state.forPerson;
+        els.toggleNotes.checked = state.showNotes;
+        els.note1.value = state.notes[0] || '';
+        els.note2.value = state.notes[1] || '';
+        els.note3.value = state.notes[2] || '';
+        els.selectStamp.value = state.stamp;
+        els.toggleFooter.checked = state.showFooter;
+
+        // Photo UI state
+        if (state.rawPhotoDataUrl) {
+          els.photoStyleControls.classList.remove('hidden');
+          els.btnRemovePhoto.classList.remove('hidden');
+          els.photoLabel.textContent = '更换照片 (已加载影像附片)';
+        } else {
+          els.photoStyleControls.classList.add('hidden');
+          els.btnRemovePhoto.classList.add('hidden');
+          els.photoLabel.textContent = '点击上传本地照片 (JPG / PNG / WebP)';
+          els.photoInput.value = '';
+        }
+
+        // Toggle active button styles
+        updateButtonStates();
+      }
+
+      function updateButtonStates() {
+        // Paper Theme buttons
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+          const active = btn.dataset.theme === state.theme;
+          btn.classList.toggle('border-ink', active);
+          btn.classList.toggle('bg-white', active);
+          btn.classList.toggle('ring-1', active);
+          btn.classList.toggle('ring-ink', active);
+          btn.classList.toggle('border-[#C8C2B8]', !active);
+          btn.classList.toggle('bg-[#FAF8F4]', !active);
+        });
+
+        // Layout buttons
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+          const active = btn.dataset.layout === state.layout;
+          btn.classList.toggle('bg-ink', active);
+          btn.classList.toggle('text-[#F6F3EC]', active);
+          btn.classList.toggle('border-ink', active);
+          btn.classList.toggle('bg-[#FAF8F4]', !active);
+          btn.classList.toggle('text-ink', !active);
+          btn.classList.toggle('border-[#C8C2B8]', !active);
+        });
+
+        // Photo filter buttons
+        document.querySelectorAll('.photo-filter-btn').forEach(btn => {
+          const active = btn.dataset.filter === state.photoFilter;
+          btn.classList.toggle('bg-ink', active);
+          btn.classList.toggle('text-[#F6F3EC]', active);
+          btn.classList.toggle('border-ink', active);
+          btn.classList.toggle('bg-[#FAF8F4]', !active);
+          btn.classList.toggle('text-ink', !active);
+          btn.classList.toggle('border-[#C8C2B8]', !active);
+        });
+
+        // Notes input visibility
+        els.notesWrap.classList.toggle('opacity-40', !state.showNotes);
+        els.notesWrap.classList.toggle('pointer-events-none', !state.showNotes);
+      }
+
+      // Render Live Card Preview from state
+      function renderPreview() {
+        // Texts
+        els.cardTitle.textContent = state.title.trim() || 'UNTITLED';
+        els.cardNumber.textContent = state.number.trim() || '00';
+        els.cardSubtitle.textContent = state.subtitle.trim() || 'eau de mémoire';
+        els.cardContent.textContent = state.content || ' ';
+        els.charCount.textContent = `${state.content.length} chars`;
+
+        els.cardCompounded.textContent = state.compounded.trim() || '—';
+        els.cardIn.textContent = state.inLocation.trim() || '—';
+        els.cardFor.textContent = state.forPerson.trim() || '—';
+
+        // Notes
+        if (state.showNotes && (state.notes[0] || state.notes[1] || state.notes[2])) {
+          els.cardNotesWrap.classList.remove('hidden');
+          els.cardNote1.textContent = state.notes[0] || '—';
+          els.cardNote2.textContent = state.notes[1] || '—';
+          els.cardNote3.textContent = state.notes[2] || '—';
+        } else {
+          els.cardNotesWrap.classList.add('hidden');
+        }
+
+        // Photo
+        if (state.processedPhotoDataUrl) {
+          els.cardPhoto.src = state.processedPhotoDataUrl;
+          els.cardPhotoWrap.classList.remove('hidden');
+        } else {
+          els.cardPhoto.src = '';
+          els.cardPhotoWrap.classList.add('hidden');
+        }
+
+        // Theme class
+        els.card.classList.remove('theme-classic', 'theme-kraft', 'theme-noir', 'theme-grid');
+        els.card.classList.add(`theme-${state.theme}`);
+
+        // Layout class
+        els.card.classList.remove('card-ratio-classic', 'card-ratio-auto');
+        els.card.classList.add(state.layout === 'classic' ? 'card-ratio-classic' : 'card-ratio-auto');
+
+        // Meta badge
+        const themeNames = { classic: 'CLASSIC', kraft: 'KRAFT', noir: 'NOIR', grid: 'GRID' };
+        els.previewMetaBadge.textContent = `${state.layout === 'classic' ? '3:4' : 'AUTO'} · ${themeNames[state.theme]}`;
+
+        // Rubber Stamp
+        if (state.stamp && state.stamp !== 'NONE') {
+          els.cardStamp.textContent = state.stamp;
+          els.cardStamp.classList.remove('hidden');
+        } else {
+          els.cardStamp.classList.add('hidden');
+        }
+
+        // Footer & Barcode
+        els.cardFooterWrap.classList.toggle('hidden', !state.showFooter);
+        if (state.showFooter) {
+          renderBarcode(`${state.title}-${state.number}-${state.compounded}`);
+        }
+      }
+
+      // Bind Input Events
+      function bindEvents() {
+        const bindField = (el, key) => {
+          el.addEventListener('input', (e) => {
+            state[key] = e.target.value;
+            renderPreview();
+          });
+        };
+
+        bindField(els.title, 'title');
+        bindField(els.number, 'number');
+        bindField(els.subtitle, 'subtitle');
+        bindField(els.content, 'content');
+        bindField(els.compounded, 'compounded');
+        bindField(els.inLocation, 'inLocation');
+        bindField(els.forPerson, 'forPerson');
+
+        // Subtitle quick presets
+        document.querySelectorAll('.preset-sub').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.subtitle = btn.dataset.val;
+            els.subtitle.value = state.subtitle;
+            renderPreview();
+          });
+        });
+
+        // Notes inputs
+        [els.note1, els.note2, els.note3].forEach((input, idx) => {
+          input.addEventListener('input', (e) => {
+            state.notes[idx] = e.target.value;
+            renderPreview();
+          });
+        });
+
+        els.toggleNotes.addEventListener('change', (e) => {
+          state.showNotes = e.target.checked;
+          updateButtonStates();
+          renderPreview();
+        });
+
+        // Fill current time
+        els.btnFillNow.addEventListener('click', () => {
+          state.compounded = getFormattedNow();
+          els.compounded.value = state.compounded;
+          renderPreview();
+          showToast('已更新为当前时间');
+        });
+
+        // Paper Theme selector
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.theme = btn.dataset.theme;
+            updateButtonStates();
+            renderPreview();
+          });
+        });
+
+        // Layout selector
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.layout = btn.dataset.layout;
+            updateButtonStates();
+            renderPreview();
+          });
+        });
+
+        // Stamp selector
+        els.selectStamp.addEventListener('change', (e) => {
+          state.stamp = e.target.value;
+          renderPreview();
+        });
+
+        // Footer toggle
+        els.toggleFooter.addEventListener('change', (e) => {
+          state.showFooter = e.target.checked;
+          renderPreview();
+        });
+
+        // Photo Upload
+        els.photoInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            state.rawPhotoDataUrl = ev.target.result;
+            state.processedPhotoDataUrl = await processPhotoFilter(state.rawPhotoDataUrl, state.photoFilter);
+            syncInputsFromState();
+            renderPreview();
+            showToast('影像附片已载入');
+          };
+          reader.readAsDataURL(file);
+        });
+
+        // Photo Filter switching
+        document.querySelectorAll('.photo-filter-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            state.photoFilter = btn.dataset.filter;
+            updateButtonStates();
+            if (state.rawPhotoDataUrl) {
+              state.processedPhotoDataUrl = await processPhotoFilter(state.rawPhotoDataUrl, state.photoFilter);
+              renderPreview();
+            }
+          });
+        });
+
+        // Remove Photo
+        els.btnRemovePhoto.addEventListener('click', () => {
+          state.rawPhotoDataUrl = '';
+          state.processedPhotoDataUrl = '';
+          state.photoFilter = 'original';
+          syncInputsFromState();
+          renderPreview();
+          showToast('已移除影像附片');
+        });
+
+        // New Blank Entry
+        els.btnNewEntry.addEventListener('click', () => {
+          state = {
+            id: null,
+            title: '',
+            number: String(new Date().getDate()).padStart(2, '0'),
+            subtitle: 'daily log',
+            content: '',
+            compounded: getFormattedNow(),
+            inLocation: 'our lab',
+            forPerson: 'myself',
+            showNotes: true,
+            notes: ['', '', ''],
+            theme: state.theme,
+            layout: state.layout,
+            stamp: 'NONE',
+            showFooter: true,
+            rawPhotoDataUrl: '',
+            photoFilter: 'original',
+            processedPhotoDataUrl: ''
+          };
+          syncInputsFromState();
+          renderPreview();
+          els.title.focus();
+          showToast('已创建空白配方');
+        });
+
+        // Save to Local Archive
+        els.btnSaveArchive.addEventListener('click', saveCurrentToArchive);
+
+        // Archive Drawer Open/Close
+        els.btnOpenArchive.addEventListener('click', openArchiveDrawer);
+        els.btnCloseArchive.addEventListener('click', closeArchiveDrawer);
+        els.archiveBackdrop.addEventListener('click', closeArchiveDrawer);
+
+        // Export PNG
+        els.btnExportPng.addEventListener('click', exportJournalImage);
+
+        // Export Modal Close
+        const closeExportModal = () => {
+          els.exportModal.classList.add('hidden');
+          els.exportModal.classList.remove('flex');
+        };
+        els.btnCloseExport.addEventListener('click', closeExportModal);
+        els.btnModalCloseSecondary.addEventListener('click', closeExportModal);
+        els.exportModal.addEventListener('click', (e) => {
+          if (e.target === els.exportModal) closeExportModal();
+        });
+      }
+
+      // --- LocalStorage Archive Logic ---
+      function loadArchiveFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          archiveEntries = raw ? JSON.parse(raw) : [];
+        } catch (err) {
+          archiveEntries = [];
+        }
+        els.archiveCount.textContent = archiveEntries.length;
+      }
+
+      function persistArchiveToStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(archiveEntries));
+          els.archiveCount.textContent = archiveEntries.length;
+          return true;
+        } catch (err) {
+          showToast('存储空间不足，请清理旧档案或移除大图后再试');
+          return false;
+        }
+      }
+
+      function saveCurrentToArchive() {
+        const nowId = state.id || `lab_${Date.now()}`;
+        const entryCopy = {
+          ...state,
+          id: nowId,
+          notes: [...state.notes],
+          // Store processed photo to save storage space instead of duplicating raw + processed
+          rawPhotoDataUrl: state.processedPhotoDataUrl || '',
+          savedAt: getFormattedNow()
+        };
+
+        const existingIdx = archiveEntries.findIndex(item => item.id === nowId);
+        if (existingIdx >= 0) {
+          archiveEntries[existingIdx] = entryCopy;
+        } else {
+          archiveEntries.unshift(entryCopy);
+        }
+
+        if (persistArchiveToStorage()) {
+          state.id = nowId;
+          renderArchiveList();
+          showToast('已存入实验室档案');
+        }
+      }
+
+      function renderArchiveList() {
+        if (!archiveEntries.length) {
+          els.archiveList.innerHTML = `
+            <div class="py-16 text-center space-y-2">
+              <div class="font-space text-xs tracking-[0.2em] uppercase text-mutedInk">EMPTY ARCHIVE</div>
+              <p class="text-xs font-serif text-mutedInk">档案柜暂无记录，点击顶部「存入档案」即可归档当前手账。</p>
+            </div>
+          `;
+          return;
+        }
+
+        els.archiveList.innerHTML = archiveEntries.map(entry => {
+          const isPendingDel = pendingDeleteId === entry.id;
+          const previewText = (entry.content || '').replace(/\n/g, ' ').slice(0, 52);
+          return `
+            <div class="p-4 bg-[#FAF8F4] border border-[#D1CCC3] hover:border-ink rounded-sm transition group">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 cursor-pointer flex-1" data-load-id="${entry.id}">
+                  <div class="flex items-baseline gap-2">
+                    <span class="font-space font-bold text-xs px-1.5 py-0.5 bg-ink text-[#F6F3EC] rounded-sm">${escapeHtml(entry.number || '00')}</span>
+                    <h4 class="font-mono font-bold text-sm text-ink truncate">${escapeHtml(entry.title || 'UNTITLED')}</h4>
+                  </div>
+                  <p class="text-xs font-serif text-mutedInk mt-1.5 line-clamp-2">${escapeHtml(previewText || '（无正文内容）')}</p>
+                  <div class="mt-2.5 flex items-center gap-3 text-[10px] font-space text-mutedInk uppercase">
+                    <span>${escapeHtml(entry.compounded || entry.savedAt || '')}</span>
+                    <span>·</span>
+                    <span>${escapeHtml(entry.theme || 'classic')}</span>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-2 shrink-0">
+                  <button type="button" data-load-id="${entry.id}" class="text-[11px] font-mono px-2.5 py-1 border border-ink text-ink hover:bg-ink hover:text-[#F6F3EC] rounded-sm transition">
+                    载入
+                  </button>
+                  <button type="button" data-del-id="${entry.id}" class="text-[11px] font-mono ${isPendingDel ? 'text-red-700 font-bold underline' : 'text-mutedInk hover:text-red-700'} transition">
+                    ${isPendingDel ? '确认删除?' : '删除'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Attach handlers
+        els.archiveList.querySelectorAll('[data-load-id]').forEach(el => {
+          el.addEventListener('click', () => {
+            const target = archiveEntries.find(item => item.id === el.dataset.loadId);
+            if (!target) return;
+            state = {
+              ...DEFAULT_STATE,
+              ...target,
+              notes: Array.isArray(target.notes) ? [...target.notes] : ['', '', ''],
+              processedPhotoDataUrl: target.processedPhotoDataUrl || target.rawPhotoDataUrl || ''
+            };
+            syncInputsFromState();
+            renderPreview();
+            closeArchiveDrawer();
+            showToast(`已载入档案：${state.title || 'UNTITLED'}`);
+          });
+        });
+
+        els.archiveList.querySelectorAll('[data-del-id]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.delId;
+            if (pendingDeleteId === id) {
+              archiveEntries = archiveEntries.filter(item => item.id !== id);
+              if (state.id === id) state.id = null;
+              pendingDeleteId = null;
+              persistArchiveToStorage();
+              renderArchiveList();
+              showToast('已从档案柜删除');
+            } else {
+              pendingDeleteId = id;
+              renderArchiveList();
+            }
+          });
+        });
+      }
+
+      function openArchiveDrawer() {
+        pendingDeleteId = null;
+        renderArchiveList();
+        els.archiveBackdrop.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          els.archiveBackdrop.classList.remove('opacity-0');
+          els.archiveDrawer.classList.remove('translate-x-full');
+        });
+      }
+
+      function closeArchiveDrawer() {
+        els.archiveBackdrop.classList.add('opacity-0');
+        els.archiveDrawer.classList.add('translate-x-full');
+        setTimeout(() => {
+          els.archiveBackdrop.classList.add('hidden');
+        }, 260);
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // --- High-Resolution PNG Export ---
+      async function exportJournalImage() {
+        const originalText = els.btnExportPng.innerHTML;
+        els.btnExportPng.disabled = true;
+        els.btnExportPng.innerHTML = `<span class="font-space">GENERATING...</span>`;
+
+        try {
+          // Wait for fonts to be fully ready
+          if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+          }
+
+          const canvas = await html2canvas(els.card, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false
+          });
+
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
+          const safeNo = (state.number || '00').replace(/[^a-zA-Z0-9_-]/g, '');
+          const dateSlug = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+          const filename = `LE-JOURNAL-NO${safeNo}-${dateSlug}.png`;
+
+          // Populate modal preview
+          els.exportedPreviewImg.src = dataUrl;
+          els.btnModalDownload.href = dataUrl;
+          els.btnModalDownload.download = filename;
+
+          // Trigger automatic download
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Open preview modal (especially helpful on mobile / iOS Safari)
+          els.exportModal.classList.remove('hidden');
+          els.exportModal.classList.add('flex');
+          showToast('高清 PNG 图片已导出');
+        } catch (err) {
+          console.error('Export failed:', err);
+          showToast('导出失败，请重试');
+        } finally {
+          els.btnExportPng.disabled = false;
+          els.btnExportPng.innerHTML = originalText;
+        }
+      }
+
+      // Initialize App
+      function init() {
+        loadArchiveFromStorage();
+        syncInputsFromState();
+        renderPreview();
+        bindEvents();
+      }
+
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
